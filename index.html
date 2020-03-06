@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Land use Morphcode map</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body  
+        { margin: 0; 
+        padding: 0; 
+        font-family: sans-serif; 
+        font-size: 14px;}
+    #map 
+        { position: absolute; top: 0; bottom: 0; width: 100%; }
+    li 
+        { padding: 3px 0;}
+    #panel 
+        {background: white; 
+        width: 350px; 
+        border: 1px solid rgba(0,0,0,0.05);
+        position:absolute;
+        right: 16px;  /* from right*/
+        top: 16px;
+        box-shadow: 0 0 4px 0 rgba(0,0,0,0.1);
+        color: rgba(0,0,0,0.5)}
+    h4 
+        {text-transform: uppercase;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        margin: 0px;
+        padding: 16px}
+    ul 
+        {list-style-type: none;
+        margin: 0;
+        padding: 16px;}
+    ul span
+        {width: 10px;
+        height: 10px;
+        display: inline-block;
+        margin-right: 8px;
+        border-radius: 50%;
+        border: 1px solid  rgba(0,0,0,0.05);
+        box-sizing: border-box}
+    dd 
+        {margin-left: 0;
+        margin-bottom: 8px;
+        font-weight: bold;}
+    dl {margin-bottom: 0px;}
+    .mapboxgl-popup-content
+        {font-size: 14px;
+        color: rgba(0, 0, 0, 0.5);
+        min-width: 250px;
+        max-width: 400px;
+        box-shadow: 0 0 4px 0 rgba(0,0,0,0.1);}
+
+  </style>
+</head>
+
+<body>
+    <div id="map" ></div>
+    
+    <div id="panel"> 
+        <h4>Land Use</h4>
+        <ul>
+            <li><span style="background: #f9eddb"></span>One & Two famly Buildings </li>
+            <li><span style="background :#f6d9cb"></span>Multi-Family Buildings</li>
+            <li><span style="background :#f1b89c"></span>Mixed Residential & Commercial Building</li>
+            <li><span style="background :#df7649"></span>Commercial & Office Buildings</li>
+            <li><span style="background :#cf4f4f"></span>Industrial & Manufacturing</li>
+            <li><span style="background :#bec6cc"></span>Transportation & Utility</li>
+            <li><span style="background :#bde7f4"></span>Public Facilities & Institutions</li>
+            <li><span style="background :#f8fff6"></span>Open Space & Outdoor Recreation</li>
+            <li><span style="background :#8da2b4"></span>Parking Facilities</li>
+            <li><span style="background :#e4e4e4"></span>Vacant Land</li>
+            <li><span style="background :#f9f9f9"></span>No Data</li>
+        </ul>
+    </div> 
+
+    <script>
+        var landUseName = {
+        '01': 'One & Two famly Buildings',
+        '02': 'Multi-Family Buildings',
+        '03': 'Mixed Residential & Commercial Building',
+        '04': 'Commercial & Office Buildings',
+        '05': 'Industrial & Manufacturing',
+        '06': 'Transportation & Utility',
+        '07': 'Public Facilities & Institutions',
+        '08': 'Open Space & Outdoor Recreation',
+        '09': 'Parking Facilities',
+        '10': 'Vacant Land',
+        '11': 'No Data'};  
+
+        mapboxgl.accessToken = 'pk.eyJ1IjoibWFobXVkdGFudG91c2giLCJhIjoiY2s3YXBsbWFuMTJsNDNmcGY3a2JtbjJ1YyJ9.C36ZOFTK74nfQnpqzE-xjw';
+        var map = new mapboxgl.Map({
+            container: 'map', // container id
+            style: 'mapbox://styles/mahmudtantoush/ck7aqlhve023m1ioc7v7qaw8t', // stylesheet location
+            center: [-73.979,40.738], // starting position [lng, lat]
+            zoom: 13, // starting zoom
+            minZoom: 13,
+            maxZoom: 18,
+            hash: true
+        });
+
+        var nav = new mapboxgl.NavigationControl();
+        map.addControl(nav, 'top-left')
+
+        map.on('mousemove',function(event){ 
+            //console.log(event);
+            //console.log(event.point);
+            if(map.loaded()){
+                var features = map.queryRenderedFeatures(event.point, {layers: ["Lots"]});
+                map.getCanvas().style.cursor= features.length ? 'pointer' : ''; //conditional operator
+                }
+            });
+
+        map.on("click", function(event) {
+            //console.log("Mouse Clicked");
+            //console.log(event.point);
+
+            var geometry = event.point;
+            var parameters = {
+                layers: ["Lots"]
+            }
+            var features = map.queryRenderedFeatures(geometry,parameters); //query viewd on page 
+            //console.log(features);
+            //console.log(features.length + "features");
+            var lot = features[0]
+            console.log(lot);
+
+            if(features.length > 0){
+                var bbl = lot.properties.BBL || '-';
+                var landuse = landUseName[lot.properties.LandUse] || '-';
+                var zoneDist = lot.properties.ZoneDist1 || '-';
+                var bldgClass = lot.properties.BldgClass || '-';
+                var ownerName = lot.properties.OwnerName || '-';
+                console.log(bbl, landuse, zoneDist, bldgClass, ownerName)
+
+                var popup = new mapboxgl.Popup()
+                    .setLngLat(event.lngLat)
+                    .setHTML("<dl>" +
+                    "<dt>BBL</dt>" +
+                    "<dd>" + bbl + "</dd>" +
+                    "<dt>LandUse</dt>" +
+                    "<dd>" + landuse + "</dd>" +              
+                    "<dt>ZoneDist1</dt>" +
+                    "<dd>" + zoneDist + "</dd>" +              
+                    "<dt>BldgClass</dt>" +
+                    "<dd>" + bldgClass + "</dd>" +
+                    "<dt>OwnerName</dt>" +
+                    "<dd>" + ownerName + "</dd>" +    
+                    "</dl>") // or concant with + for multiline
+                    .addTo(map);
+            }
+        })
+ 
+    </script>
+
+</body>
+</html>
